@@ -2,11 +2,52 @@
 
 require 'logger'
 require 'yaml'
+require 'optparse'
 
-# Config
-TRIGGER="+491751830425"
-LOGFILE="/tmp/#{File.basename($0, '.rb')}.log"
-CONFFILE="#{File.basename($0, '.rb')}.yml"
+# Helper to convert config keys to symbols
+class Hash
+  def symbolize_keys!
+    t=self.dup
+    self.clear
+    t.each_pair do |k,v|
+      if v.kind_of?(Hash)
+        v.symbolize_keys!
+      end
+      self[k.to_sym] = v
+      self
+    end
+    self
+  end
+end
+
+# Command line options
+options = {}
+
+optparse = OptionParser.new do|opts|
+  opts.banner = "Usage: #{File.basename $0} [options] messagefile"
+  
+  options[:configfile] = "/etc/#{File.basename $0, ".rb"}.conf"
+  opts.on( '-c', '--configfile FILE', 'Read configuration from FILE' ) do|file|
+    options[:configfile] = file
+  end
+  
+  opts.on( '-h', '--help', 'Display this screen' ) do
+    puts opts
+    exit
+  end
+end
+ 
+optparse.parse!
+ 
+# Read config
+begin
+  conf = YAML.load_file( options[:configfile] )
+rescue
+  puts "Opening #{options[:configfile]} failed."
+  exit 1
+end
+
+conf.symbolize_keys!
 
 # Init
 
@@ -22,9 +63,6 @@ logger.datetime_format = "%Y-%m-%d %H:%M:%S"
 #logger.error("now you are in trouble") 
 #logger.fatal("this is the end...")
 
-conf = YAML.load_file( CONFFILE ) if File::exist?( CONFFILE )
-p conf
-
 # Do what has to be done
 
 ENV['SMS_MESSAGES'].to_i.times { |msg_count|
@@ -32,10 +70,13 @@ ENV['SMS_MESSAGES'].to_i.times { |msg_count|
   msg_sender = ENV["SMS_#{msg_count+1}_NUMBER"]
   msg_text = ENV["SMS_#{msg_count+1}_TEXT"]
 
-  if msg_sender == TRIGGER
-    print msg_sender, ': ', msg_text, "\n"
+  logger.info 'Received from ' + msg_sender + ': ' + msg_text
+
+  if msg_sender == conf[:global][:trigger]
+    logger.info 'From trigger; forwarding'
   else
-    puts 'bulk message'
+    logger.info 'Unknown sender; forwarding to admin'
+    #conf['global']['admin']
   end
 }
 

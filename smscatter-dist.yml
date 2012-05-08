@@ -1,15 +1,15 @@
 global:
   logfile: /tmp/smshandler.log
   peoplefile: people-test.yml
-  trigger: +49171234567
+  trigger: '+49171234567'
   admin: cwh
   master:
     - cwh
-    - +49171234567
+    - '+49171234567'
 
 sms:
   provider: clickatell
-  from: +491717654321
+  from: '+491717654321'
   to:
     - achim
     - cwh
@@ -24,6 +24,6 @@ email:
     - cwh
 
 clickatell:
-  apiid:  9876543
+  apiid: '9876543'
   user:  cwhofmann
   pass:  blafoobla
