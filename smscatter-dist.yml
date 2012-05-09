@@ -1,27 +1,23 @@
 global:
   logfile: /tmp/smshandler.log
-  peoplefile: people-test.yml
+  peoplefile: people-dist.yml
   trigger: '+49171234567'
-  admin: cwh
-  master:
-    - cwh
-    - '+49171234567'
+  admin_email: cwh@webeve.de
+  enable:
+    - email
+    - sms
 
 sms:
   provider: clickatell
   from: '+491717654321'
-  to:
-    - achim
-    - cwh
 
 email:
-  server: mail.webeve.de
+  host: mail.webeve.de
+  port: 25
   user: cwh
   pass: fooblafoo
+  domain: localhost
   from: ffw@goessenreuth.de
-  to:
-    - achim
-    - cwh
 
 clickatell:
   apiid: '9876543'
