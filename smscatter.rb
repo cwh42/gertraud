@@ -8,6 +8,7 @@ require 'optparse'
 
 require 'rubygems' 
 require 'pony'
+require 'clickatell'
 
 # try to check whether we are called by gammu-smsd
 if ENV['SMS_MESSAGES'] == nil
@@ -91,19 +92,26 @@ Pony.options = {
   }
 }
 
-# read people
-people = Array.new
+clickatell = Clickatell::API.authenticate( conf[:clickatell][:apiid],
+                                           conf[:clickatell][:user],
+                                           conf[:clickatell][:pass] )
+#Clickatell::API.debug_mode = true if options[:debug]
+#Clickatell::API.test_mode = true if options[:debug]
 
+# read people
 begin
-  YAML.load_file( conf[:global][:peoplefile] ).each{|name,data|
-    people.push Person.new(data['name'], data['phone'], data['email']);
+  YAML.load_file( conf[:global][:peoplefile] ).each{|data|
+    Person.new(data['name'],
+               data['phone'],
+               data['email'],
+               data['enable_email'],
+               data['enable_sms']);
   }
 rescue
-  puts "Opening #{conf[:global][:peoplefile]} failed."
+  puts "Opening #{conf[:global][:peoplefile]} failed: #{$!}"
+  puts $@ if options[:debug]
   exit 1
 end
-
-p people if options[:debug]
 
 # Do what has to be done
 ENV['SMS_MESSAGES'].to_i.times { |msg_count|
@@ -114,7 +122,55 @@ ENV['SMS_MESSAGES'].to_i.times { |msg_count|
   logger.info 'Received from ' + msg_sender + ': ' + msg_text
 
   if msg_sender == conf[:global][:trigger]
-    logger.info 'From trigger; forwarding'
+    logger.info 'From trigger'
+    
+    # send email (if any recipients)
+    email_recipients = Array.new
+    
+    if conf[:global][:enable_email]
+      logger.debug 'Email sending globally enabled'
+      email_recipients = Person.get_all_email
+    else
+      logger.debug 'Email sending globally disabled'
+      email_recipients = Person.get_enabled_email
+    end
+    
+    if !email_recipients.empty?
+      logger.info "Sending email to #{email_recipients.size} recipients"
+      begin
+        Pony.mail(:to => email_recipients,
+                  :subject => 'SMS received',
+                  :body => msg_sender + ': ' + msg_text)
+      rescue
+        logger.fatal "Sending email failed: #{$!}"
+        exit 1
+      end
+    end
+    
+    # send SMS (if any recipients)
+    sms_recipients = Array.new
+
+    if conf[:global][:enable_sms]
+      logger.debug 'Sms sending globally enabled'
+      sms_recipients = Person.get_all('phone')
+    else
+      logger.debug 'Sms sending globally disabled'
+      sms_recipients = Person.get_enabled_sms
+    end
+
+    if !sms_recipients.empty?
+      logger.info "Sending sms to #{sms_recipients.size} recipients"
+      begin
+        result = clickatell.send_message( sms_recipients,
+                                          msg_text,
+                                          {:from => conf[:sms][:from]} )
+        logger.debug( "Clickatell result: #{result}" )
+        logger.info("Remaining Clickatell balance: #{clickatell.account_balance}") 
+      rescue
+        logger.fatal "Sending sms failed: #{$!}"
+        exit 1
+      end
+    end
   else
     logger.info 'Unknown sender; forwarding to admin via email'
     begin
@@ -122,7 +178,7 @@ ENV['SMS_MESSAGES'].to_i.times { |msg_count|
                 :subject => 'SMS received',
                 :body => msg_sender + ': ' + msg_text)
     rescue
-      logger.fatal "Sending email to admin failed"
+      logger.fatal "Sending email to admin failed: #{$!}"
       exit 1
     end
   end

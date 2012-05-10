@@ -3,9 +3,8 @@ global:
   peoplefile: people-dist.yml
   trigger: '+49171234567'
   admin_email: cwh@webeve.de
-  enable:
-    - email
-    - sms
+  enable_email: yes
+  enable_sms: no
 
 sms:
   provider: clickatell

@@ -1,18 +1,22 @@
-achim:
+-
   email: achim@bla.org
   name: Achim Fooman
   phone: +491607654321
-bernd:
-  email: bernd@foo.org
-  name: Christopher Hofmann
+  enable_email: yes
+  enable_sms: no
+-
+  email: john@doe.org
+  name: John Doe
   phone: +491705634127
-cwh:
+  enable_email: yes
+-
   email: cwh@webeve.de
   name: Christopher Hofmann
   phone: +491617654321
-dave:
+-
   name: Dave Gwen
   phone: +491519876543
-erwin:
+  enable_sms: no
+-
   email: +491601234567
   name: Erwin Fuchs
