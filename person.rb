@@ -1,63 +1,33 @@
-class Person
-  attr_accessor :name, :phone, :email, :enable_email, :enable_sms
+require 'ostruct'
 
-  def initialize(name, phone, email, enable_email, enable_sms)
-    @name = name
-    @phone = phone
-    @email = email
-    @enable_email = enable_email
-    @enable_sms = enable_sms
-  end
-
-  def inspect
-    "<name: #{self.name} phone: #{self.phone} email: #{self.email}
-            #enable_email: #{self.enable_email}, enable_sms: #{self.enable_sms}>"
+class Person < OpenStruct
+  def email
+    "#{self.name} <#{super}>" if super
   end
 
   def self.get_all(what)
     vars = Array.new
 
     ObjectSpace.each_object(Person) { |o|
-      m = o.method(what.to_sym)
-      vars.push m.call if m.call
+      vars.push o.send(what) if o.send(what)
     }
     vars
   end
 
-  def self.get_all_email
+  def self.get_if(what)
     vars = Array.new
 
     ObjectSpace.each_object(Person) { |o|
-      vars.push "#{o.name} <#{o.email}>" if o.email
+      vars.push o.send(what) if o.send(what) && yield(o)
     }
     vars
   end
 
-  def self.get_enabled(what)
+  def self.inspect_all
     vars = Array.new
 
     ObjectSpace.each_object(Person) { |o|
-      what_sym = o.method(what.to_sym)
-      enable_what_sym = o.method("enable_#{what}".to_sym)
-      vars.push what_sym.call if what_sym.call && enable_what_sym.call
-    }
-    vars
-  end
-
-  def self.get_enabled_sms
-    vars = Array.new
-
-    ObjectSpace.each_object(Person) { |o|
-      vars.push o.phone if o.phone && o.enable_sms
-    }
-    vars
-  end
-
-  def self.get_enabled_email
-    vars = Array.new
-
-    ObjectSpace.each_object(Person) { |o|
-      vars.push "#{o.name} <#{o.email}>" if o.email && o.enable_email
+      vars.push o.inspect
     }
     vars
   end

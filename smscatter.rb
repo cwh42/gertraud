@@ -100,12 +100,8 @@ clickatell = Clickatell::API.authenticate( conf[:clickatell][:apiid],
 
 # read people
 begin
-  YAML.load_file( conf[:global][:peoplefile] ).each{|data|
-    Person.new(data['name'],
-               data['phone'],
-               data['email'],
-               data['enable_email'],
-               data['enable_sms']);
+  YAML.load_file( conf[:global][:peoplefile] ).each{ |data|
+    Person.new(data)
   }
 rescue
   puts "Opening #{conf[:global][:peoplefile]} failed: #{$!}"
@@ -129,10 +125,10 @@ ENV['SMS_MESSAGES'].to_i.times { |msg_count|
     
     if conf[:global][:enable_email]
       logger.debug 'Email sending globally enabled'
-      email_recipients = Person.get_all_email
+      email_recipients = Person.get_if('email') { |x| x.enable_email != false }
     else
       logger.debug 'Email sending globally disabled'
-      email_recipients = Person.get_enabled_email
+      email_recipients = Person.get_if('email') { |x| x.enable_email }
     end
     
     if !email_recipients.empty?
@@ -140,7 +136,7 @@ ENV['SMS_MESSAGES'].to_i.times { |msg_count|
       begin
         Pony.mail(:to => email_recipients,
                   :subject => 'SMS received',
-                  :body => msg_sender + ': ' + msg_text)
+                  :body => msg_text)
       rescue
         logger.fatal "Sending email failed: #{$!}"
         exit 1
@@ -152,10 +148,10 @@ ENV['SMS_MESSAGES'].to_i.times { |msg_count|
 
     if conf[:global][:enable_sms]
       logger.debug 'Sms sending globally enabled'
-      sms_recipients = Person.get_all('phone')
+      sms_recipients = Person.get_if('phone') { |x| x.enable_sms != false }
     else
       logger.debug 'Sms sending globally disabled'
-      sms_recipients = Person.get_enabled_sms
+      sms_recipients = Person.get_if('phone') { |x| x.enable_sms }
     end
 
     if !sms_recipients.empty?
