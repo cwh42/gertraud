@@ -17,6 +17,7 @@ email:
   pass: fooblafoo
   domain: localhost
   from: ffw@goessenreuth.de
+  subject: SMS received
 
 clickatell:
   apiid: '9876543'

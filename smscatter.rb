@@ -1,5 +1,31 @@
 #!/usr/bin/ruby
 
+##############################################################################
+#
+# smscatter - a RunOnReceive script being used with gammu-smsd for forwarding
+#             SMS to SMS and/or email
+# Version     0.99
+#
+# Copyright (C) 2012 Christopher Hofmann <cwh@webeve.de>
+#
+# ---------------------------------------------------------------------------
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the Free
+# Software Foundation; either version 2 of the License, or (at your option)
+# any later version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# this program; if not, write to the Free Software Foundation, Inc., 51
+# Franklin St, Fifth Floor, Boston, MA 02110, USA
+#
+###############################################################################
+
 require 'person'
 
 require 'logger'
@@ -68,15 +94,14 @@ end
 conf.symbolize_keys!
 
 # Init
-if options[:debug] 
-  logger = Logger.new(STDOUT)
-else
-  logger = Logger.new(conf[:global][:logfile], 'monthly')
-end
-
+#logger = Logger.new(STDOUT)
+logger = Logger.new(conf[:global][:logfile], 'monthly')
 logger.datetime_format = "%Y-%m-%d %H:%M:%S"
-#logger.level = Logger::WARN
-#logger.progname  = File.basename($0)
+logger.level = Logger::INFO
+
+if options[:debug]
+  logger.level = Logger::DEBUG
+end
 
 Pony.options = {
   :from => conf[:email][:from],
@@ -125,9 +150,11 @@ ENV['SMS_MESSAGES'].to_i.times { |msg_count|
     
     if conf[:global][:enable_email]
       logger.debug 'Email sending globally enabled'
+      # get all email addresses except of those who have an explicit "enable_email: no"
       email_recipients = Person.get_if('email') { |x| x.enable_email != false }
     else
       logger.debug 'Email sending globally disabled'
+      # get only email addresses who have an explicit "enable_email: yes"
       email_recipients = Person.get_if('email') { |x| x.enable_email }
     end
     
@@ -135,7 +162,7 @@ ENV['SMS_MESSAGES'].to_i.times { |msg_count|
       logger.info "Sending email to #{email_recipients.size} recipients"
       begin
         Pony.mail(:to => email_recipients,
-                  :subject => 'SMS received',
+                  :subject => conf[:email][:subject],
                   :body => msg_text)
       rescue
         logger.fatal "Sending email failed: #{$!}"
@@ -148,14 +175,17 @@ ENV['SMS_MESSAGES'].to_i.times { |msg_count|
 
     if conf[:global][:enable_sms]
       logger.debug 'Sms sending globally enabled'
+      # get all phone numbers except of those who have an explicit "enable_sms: no"
       sms_recipients = Person.get_if('phone') { |x| x.enable_sms != false }
     else
       logger.debug 'Sms sending globally disabled'
+      # get only phone numbers who have an explicit "enable_sms: yes"
       sms_recipients = Person.get_if('phone') { |x| x.enable_sms }
     end
 
     if !sms_recipients.empty?
       logger.info "Sending sms to #{sms_recipients.size} recipients"
+      logger.debug "Message length: #{msg_text.length} characters"
       begin
         result = clickatell.send_message( sms_recipients,
                                           msg_text,
@@ -171,7 +201,7 @@ ENV['SMS_MESSAGES'].to_i.times { |msg_count|
     logger.info 'Unknown sender; forwarding to admin via email'
     begin
       Pony.mail(:to => conf[:global][:admin_email],
-                :subject => 'SMS received',
+                :subject => conf[:email][:subject],
                 :body => msg_sender + ': ' + msg_text)
     rescue
       logger.fatal "Sending email to admin failed: #{$!}"
