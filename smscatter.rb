@@ -26,6 +26,7 @@
 #
 ###############################################################################
 
+$LOAD_PATH << File.join(File.dirname(__FILE__))
 require 'person'
 
 require 'logger'
@@ -124,9 +125,11 @@ clickatell = Clickatell::API.authenticate( conf[:clickatell][:apiid],
 #Clickatell::API.test_mode = true if options[:debug]
 
 # read people
+people = Array.new
+
 begin
   YAML.load_file( conf[:global][:peoplefile] ).each{ |data|
-    Person.new(data)
+    people.push Person.new(data)
   }
 rescue
   puts "Opening #{conf[:global][:peoplefile]} failed: #{$!}"
@@ -147,7 +150,7 @@ ENV['SMS_MESSAGES'].to_i.times { |msg_count|
     
     # send email (if any recipients)
     email_recipients = Array.new
-    
+#p Person.inspect_all    
     if conf[:global][:enable_email]
       logger.debug 'Email sending globally enabled'
       # get all email addresses except of those who have an explicit "enable_email: no"
@@ -172,7 +175,7 @@ ENV['SMS_MESSAGES'].to_i.times { |msg_count|
     
     # send SMS (if any recipients)
     sms_recipients = Array.new
-
+#p Person.inspect_all
     if conf[:global][:enable_sms]
       logger.debug 'Sms sending globally enabled'
       # get all phone numbers except of those who have an explicit "enable_sms: no"
