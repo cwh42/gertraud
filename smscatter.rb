@@ -72,8 +72,13 @@ optparse = OptionParser.new do|opts|
   end
 
   options[:debug] = false
-  opts.on( '-d', '--debug', 'Be more verbose and log to STDOUT.' ) do
+  opts.on( '-d', '--debug', 'Be more verbose.' ) do
     options[:debug] = true
+  end
+
+  options[:test] = false
+  opts.on( '-t', '--test', 'Test mode: do not send SMS messages.' ) do
+    options[:test] = true
   end
   
   opts.on( '-h', '--help', 'Display this screen' ) do
@@ -121,8 +126,13 @@ Pony.options = {
 clickatell = Clickatell::API.authenticate( conf[:clickatell][:apiid],
                                            conf[:clickatell][:user],
                                            conf[:clickatell][:pass] )
-#Clickatell::API.debug_mode = true if options[:debug]
-#Clickatell::API.test_mode = true if options[:debug]
+if options[:debug]
+  Clickatell::API.debug_mode = true if options[:debug]
+end
+
+if options[:test]
+  Clickatell::API.test_mode = true if options[:debug]
+end
 
 # read people
 people = Array.new
@@ -204,8 +214,8 @@ ENV['SMS_MESSAGES'].to_i.times { |msg_count|
     logger.info 'Unknown sender; forwarding to admin via email'
     begin
       Pony.mail(:to => conf[:global][:admin_email],
-                :subject => conf[:email][:subject],
-                :body => msg_sender + ': ' + msg_text)
+                :subject => "Message from #{msg_sender}",
+                :body => msg_text)
     rescue
       logger.fatal "Sending email to admin failed: #{$!}"
       exit 1
