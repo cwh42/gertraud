@@ -101,7 +101,7 @@ conf.symbolize_keys!
 
 # Init
 #logger = Logger.new(STDOUT)
-logger = Logger.new(conf[:global][:logfile], 'yearly')
+logger = Logger.new(conf[:global][:logfile])
 logger.datetime_format = "%Y-%m-%d %H:%M:%S"
 logger.level = Logger::INFO
 
