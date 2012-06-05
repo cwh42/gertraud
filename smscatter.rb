@@ -155,7 +155,9 @@ ENV['SMS_MESSAGES'].to_i.times { |msg_count|
 
   logger.info 'Received from ' + msg_sender + ': ' + msg_text
 
-  if msg_sender == conf[:global][:trigger]
+  trigger = conf[:global][:trigger].class == 'Array' ? conf[:global][:trigger] : [conf[:global][:trigger]];
+
+  if conf[:global][:trigger].include?(msg_sender) 
     logger.info 'From trigger'
     
     # send email (if any recipients)

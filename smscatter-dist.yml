@@ -1,7 +1,7 @@
 global:
   logfile: /tmp/smshandler.log
   peoplefile: people-dist.yml
-  trigger: '+49171234567'
+  trigger: ['+49171234567', '+491727654321']
   admin_email: cwh@webeve.de
   enable_email: yes
   enable_sms: no
