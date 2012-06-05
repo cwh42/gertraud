@@ -101,7 +101,7 @@ conf.symbolize_keys!
 
 # Init
 #logger = Logger.new(STDOUT)
-logger = Logger.new(conf[:global][:logfile], 'monthly')
+logger = Logger.new(conf[:global][:logfile], 'yearly')
 logger.datetime_format = "%Y-%m-%d %H:%M:%S"
 logger.level = Logger::INFO
 
@@ -179,7 +179,6 @@ ENV['SMS_MESSAGES'].to_i.times { |msg_count|
                   :body => msg_text)
       rescue
         logger.fatal "Sending email failed: #{$!}"
-        exit 1
       end
     end
     
@@ -207,7 +206,6 @@ ENV['SMS_MESSAGES'].to_i.times { |msg_count|
         logger.info("Remaining Clickatell balance: #{clickatell.account_balance}") 
       rescue
         logger.fatal "Sending sms failed: #{$!}"
-        exit 1
       end
     end
   else
@@ -218,7 +216,6 @@ ENV['SMS_MESSAGES'].to_i.times { |msg_count|
                 :body => msg_text)
     rescue
       logger.fatal "Sending email to admin failed: #{$!}"
-      exit 1
     end
   end
 }
