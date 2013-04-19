@@ -1,0 +1,6 @@
+Gertraud - the fastes in spreading the world with some news!
+
+Plug Gertraud as a RunOnReceive handler in you gammu-smsd config and relay any
+incoming messages to a configurable list of people per SMS or email.
+
+Lern more about gammu-smsd on http://wammu.eu/smsd/
