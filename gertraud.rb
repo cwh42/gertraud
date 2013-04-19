@@ -2,11 +2,11 @@
 
 ##############################################################################
 #
-# smscatter - a RunOnReceive script being used with gammu-smsd for forwarding
-#             SMS to SMS and/or email
-# Version     0.99
+# gertraud - a RunOnReceive script being used with gammu-smsd for forwarding
+#            SMS to SMS and/or email
+# Version    0.99
 #
-# Copyright (C) 2012 Christopher Hofmann <cwh@webeve.de>
+# Copyright (C) 2012-2013 Christopher Hofmann <cwh@webeve.de>
 #
 # ---------------------------------------------------------------------------
 #
