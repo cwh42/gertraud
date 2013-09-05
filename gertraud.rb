@@ -154,6 +154,7 @@ ENV['SMS_MESSAGES'].to_i.times { |msg_count|
   msg_text = ENV["SMS_#{msg_count+1}_TEXT"]
 
   logger.info 'Received from ' + msg_sender + ': ' + msg_text
+  logger.debug 'Encoding: ' + msg_text.encoding.to_s
 
   trigger = conf[:global][:trigger].class == 'Array' ? conf[:global][:trigger] : [conf[:global][:trigger]];
 
@@ -202,7 +203,7 @@ ENV['SMS_MESSAGES'].to_i.times { |msg_count|
       logger.debug "Message length: #{msg_text.length} characters"
       begin
         result = clickatell.send_message( sms_recipients,
-                                          msg_text,
+                                          msg_text.encode("ISO-8859-1", :invalid => :replace, :undef => :replace),
                                           {:from => conf[:sms][:from]} )
         logger.debug( "Clickatell result: #{result}" )
         logger.info("Remaining Clickatell balance: #{clickatell.account_balance}") 
